@@ -131,7 +131,10 @@ fn codex_config_responses_base() -> Option<String> {
     Some(normalized.to_string())
 }
 
-/// Whether `model_id` supports OpenAI's extended prompt-cache retention.
+/// Whether `model_id` supports extended prompt-cache retention.
+///
+/// Honored on the Responses wire API via `prompt_cache_retention: "24h"`.
+/// OpenAI GPT-5.x models and Meta's `muse-spark` models both accept it.
 pub fn supports_extended_prompt_cache_retention(model_id: &str) -> bool {
     let model = model_id.trim().to_ascii_lowercase();
     model.starts_with("gpt-5.6")
@@ -140,4 +143,26 @@ pub fn supports_extended_prompt_cache_retention(model_id: &str) -> bool {
         || model.starts_with("gpt-5.2")
         || model.starts_with("gpt-5.1")
         || model == "gpt-5"
+        // Meta Model API reuses the Responses wire format and accepts the
+        // same `prompt_cache_retention` hint on its `muse-spark` models.
+        || model.starts_with("muse-spark")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::supports_extended_prompt_cache_retention;
+
+    #[test]
+    fn muse_spark_gets_extended_cache_retention() {
+        for id in ["muse-spark-1.1", "muse-spark-1.2", "MUSE-SPARK-1.2"] {
+            assert!(supports_extended_prompt_cache_retention(id), "{id}");
+        }
+    }
+
+    #[test]
+    fn unrelated_models_do_not_get_extended_retention() {
+        for id in ["gpt-4o", "claude-sonnet-4-5", "deepseek-v3", ""] {
+            assert!(!supports_extended_prompt_cache_retention(id), "{id}");
+        }
+    }
 }
