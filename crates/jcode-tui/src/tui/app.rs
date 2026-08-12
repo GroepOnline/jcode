@@ -718,6 +718,22 @@ struct TokenAccounting {
     cache_next_optimal_input_tokens: Option<u64>,
 }
 
+/// Frozen static system prompt for a session. Re-reading prompt source files
+/// (AGENTS.md, .jcode overlays, preferred-tools) on every API call let
+/// mid-session disk edits silently change the system prompt and flush the
+/// entire provider prefix cache — observed live 2026-08-12: two `~/AGENTS.md`
+/// appends during one turn each resent ~160k tokens on cline-pass. The static
+/// part is built once and only rebuilt when the inputs that legitimately
+/// redefine it change (skills set, canary mode). Disk edits apply from the
+/// next session.
+#[derive(Clone, Debug)]
+pub(in crate::tui::app) struct LockedStaticPrompt {
+    pub(in crate::tui::app) static_part: String,
+    pub(in crate::tui::app) context_info: crate::prompt::ContextInfo,
+    pub(in crate::tui::app) skills_fingerprint: u64,
+    pub(in crate::tui::app) is_canary: bool,
+}
+
 /// KV cache baseline tracking and per-turn cache-miss attribution.
 ///
 /// Grouped out of [`App`]. The baseline and pending-request fields drive cache
@@ -876,6 +892,8 @@ pub struct App {
     token_accounting: TokenAccounting,
     // KV cache baseline tracking + per-turn miss attribution.
     kv_cache: KvCacheState,
+    // Frozen static system prompt (see LockedStaticPrompt docs).
+    locked_static_prompt: Option<LockedStaticPrompt>,
     // Accumulated session cost + cached per-model pricing.
     cost: CostState,
     // Context limit tracking (for compaction warning)

@@ -27,12 +27,44 @@ impl App {
                 description: s.description.clone(),
             })
             .collect();
-        let (mut split, context_info) = crate::prompt::build_system_prompt_split(
-            skill_prompt.as_deref(),
-            &available_skills,
-            self.session.is_canary,
+
+        // Static part is frozen per session (see LockedStaticPrompt): disk
+        // edits to AGENTS.md / overlays mid-session must not change the system
+        // prompt, every change flushes the full provider prefix cache.
+        let fingerprint = crate::prompt::skills_list_fingerprint(&available_skills);
+        let is_canary = self.session.is_canary;
+        let (static_part, mut context_info) = match &self.locked_static_prompt {
+            Some(lock) if lock.skills_fingerprint == fingerprint && lock.is_canary == is_canary => {
+                (lock.static_part.clone(), lock.context_info.clone())
+            }
+            _ => {
+                let (split, info) = crate::prompt::build_system_prompt_split(
+                    None,
+                    &available_skills,
+                    is_canary,
+                    None,
+                    None,
+                );
+                let static_part = split.static_part;
+                self.locked_static_prompt = Some(LockedStaticPrompt {
+                    static_part: static_part.clone(),
+                    context_info: info.clone(),
+                    skills_fingerprint: fingerprint,
+                    is_canary,
+                });
+                (static_part, info)
+            }
+        };
+        context_info.memory_chars = memory_prompt.map(|memory| memory.len()).unwrap_or(0);
+
+        let mut split = crate::prompt::SplitSystemPrompt {
+            static_part,
+            dynamic_part: String::new(),
+        };
+        crate::prompt::append_dynamic_prompt_parts(
+            &mut split,
             memory_prompt,
-            None,
+            skill_prompt.as_deref(),
         );
         self.append_current_turn_system_reminder(&mut split);
         crate::prompt::append_swarm_effort_directive(

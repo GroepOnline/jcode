@@ -1,6 +1,21 @@
+#[cfg(test)]
+#[path = "prompting_tests.rs"]
+mod prompting_tests;
+
 use super::Agent;
 use crate::logging;
 use crate::message::{Message, ToolDefinition};
+
+/// Frozen static system prompt for a session. Rebuilt only when the inputs
+/// that legitimately redefine it change (skills set, selfdev mode, working
+/// directory) — never because a prompt source file changed on disk
+/// mid-session. See `Agent::locked_static_prompt`.
+pub(super) struct StaticPromptLock {
+    pub(super) static_part: String,
+    pub(super) skills_fingerprint: u64,
+    pub(super) is_selfdev: bool,
+    pub(super) working_dir: Option<String>,
+}
 
 impl Agent {
     pub(super) fn log_prompt_prefix_accounting(
@@ -107,12 +122,59 @@ impl Agent {
             .as_ref()
             .map(std::path::PathBuf::from);
 
-        let (mut split, _context_info) = crate::prompt::build_system_prompt_split(
-            skill_prompt.as_deref(),
-            &available_skills,
-            self.session.is_canary,
+        // The static part embeds files read from disk (AGENTS.md, .jcode
+        // overlays, preferred-tools). Re-reading them per API call made the
+        // system prompt silently change mid-session whenever something edited
+        // those files — observed live 2026-08-12: two `~/AGENTS.md` appends
+        // during one turn each flushed the full provider prompt cache
+        // (~160k tokens resent per call on cline-pass). Freeze the static part
+        // per session (same philosophy as `locked_tools`); key it on the
+        // inputs that legitimately redefine it so those still rebuild.
+        let fingerprint = crate::prompt::skills_list_fingerprint(&available_skills);
+        let is_selfdev = self.session.is_canary;
+        let working_dir_key = self.session.working_dir.clone();
+
+        let static_part = {
+            let mut lock = self
+                .locked_static_prompt
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+            match lock.as_ref() {
+                Some(frozen)
+                    if frozen.skills_fingerprint == fingerprint
+                        && frozen.is_selfdev == is_selfdev
+                        && frozen.working_dir == working_dir_key =>
+                {
+                    frozen.static_part.clone()
+                }
+                _ => {
+                    let (split, _context_info) = crate::prompt::build_system_prompt_split(
+                        None,
+                        &available_skills,
+                        is_selfdev,
+                        None,
+                        working_dir.as_deref(),
+                    );
+                    let static_part = split.static_part;
+                    *lock = Some(StaticPromptLock {
+                        static_part: static_part.clone(),
+                        skills_fingerprint: fingerprint,
+                        is_selfdev,
+                        working_dir: working_dir_key,
+                    });
+                    static_part
+                }
+            }
+        };
+
+        let mut split = crate::prompt::SplitSystemPrompt {
+            static_part,
+            dynamic_part: String::new(),
+        };
+        crate::prompt::append_dynamic_prompt_parts(
+            &mut split,
             memory_prompt,
-            working_dir.as_deref(),
+            skill_prompt.as_deref(),
         );
 
         self.append_current_turn_system_reminder(&mut split);
