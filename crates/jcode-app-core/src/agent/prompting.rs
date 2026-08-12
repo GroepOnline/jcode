@@ -15,6 +15,7 @@ pub(super) struct StaticPromptLock {
     pub(super) skills_fingerprint: u64,
     pub(super) is_selfdev: bool,
     pub(super) working_dir: Option<String>,
+    pub(super) config_generation: u64,
 }
 
 impl Agent {
@@ -133,6 +134,7 @@ impl Agent {
         let fingerprint = crate::prompt::skills_list_fingerprint(&available_skills);
         let is_selfdev = self.session.is_canary;
         let working_dir_key = self.session.working_dir.clone();
+        let config_generation = crate::config::config_reload_generation();
 
         let static_part = {
             let mut lock = self
@@ -143,7 +145,8 @@ impl Agent {
                 Some(frozen)
                     if frozen.skills_fingerprint == fingerprint
                         && frozen.is_selfdev == is_selfdev
-                        && frozen.working_dir == working_dir_key =>
+                        && frozen.working_dir == working_dir_key
+                        && frozen.config_generation == config_generation =>
                 {
                     frozen.static_part.clone()
                 }
@@ -161,6 +164,7 @@ impl Agent {
                         skills_fingerprint: fingerprint,
                         is_selfdev,
                         working_dir: working_dir_key,
+                        config_generation,
                     });
                     static_part
                 }

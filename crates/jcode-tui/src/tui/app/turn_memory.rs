@@ -33,8 +33,12 @@ impl App {
         // prompt, every change flushes the full provider prefix cache.
         let fingerprint = crate::prompt::skills_list_fingerprint(&available_skills);
         let is_canary = self.session.is_canary;
+        let config_generation = crate::config::config_reload_generation();
         let (static_part, mut context_info) = match &self.locked_static_prompt {
-            Some(lock) if lock.skills_fingerprint == fingerprint && lock.is_canary == is_canary => {
+            Some(lock)
+                if lock.skills_fingerprint == fingerprint
+                    && lock.is_canary == is_canary
+                    && lock.config_generation == config_generation => {
                 (lock.static_part.clone(), lock.context_info.clone())
             }
             _ => {
@@ -51,6 +55,7 @@ impl App {
                     context_info: info.clone(),
                     skills_fingerprint: fingerprint,
                     is_canary,
+                    config_generation,
                 });
                 (static_part, info)
             }

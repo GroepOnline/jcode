@@ -732,6 +732,7 @@ pub(in crate::tui::app) struct LockedStaticPrompt {
     pub(in crate::tui::app) context_info: crate::prompt::ContextInfo,
     pub(in crate::tui::app) skills_fingerprint: u64,
     pub(in crate::tui::app) is_canary: bool,
+    pub(in crate::tui::app) config_generation: u64,
 }
 
 /// KV cache baseline tracking and per-turn cache-miss attribution.
