@@ -32,6 +32,10 @@ impl Provider for PromptLockProvider {
     fn name(&self) -> &str {
         "test"
     }
+
+    fn fork(&self) -> Arc<dyn Provider> {
+        Arc::new(PromptLockProvider)
+    }
 }
 
 fn unique_temp_dir(tag: &str) -> std::path::PathBuf {
