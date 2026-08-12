@@ -191,6 +191,43 @@ pub fn append_swarm_effort_directive(split: &mut SplitSystemPrompt, effort: Opti
 /// `mission` module in the upper `jcode-app-core` layer; the asset lives here
 /// alongside the other prompt templates.
 pub const MISSION_CONTINUATION_TEMPLATE: &str = include_str!("prompt/mission_continuation.md");
+
+/// Fingerprint of the skill list embedded in the static system prompt.
+/// Session-level static-prompt locks use this so an explicit skills reload
+/// intentionally busts the frozen prompt while unrelated disk edits
+/// (AGENTS.md, overlays) do not.
+pub fn skills_list_fingerprint(skills: &[SkillInfo]) -> u64 {
+    use std::hash::{Hash, Hasher};
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    for skill in skills {
+        skill.name.hash(&mut hasher);
+        skill.description.hash(&mut hasher);
+    }
+    hasher.finish()
+}
+
+/// Append the per-call dynamic sections (memory, then active skill) to a split
+/// prompt whose static part was built once and frozen for the session. Order
+/// matches `build_system_prompt_split_with_capabilities` exactly so a frozen
+/// prompt is byte-identical to a freshly built one.
+pub fn append_dynamic_prompt_parts(
+    split: &mut SplitSystemPrompt,
+    memory_prompt: Option<&str>,
+    skill_prompt: Option<&str>,
+) {
+    if let Some(memory) = memory_prompt {
+        if !split.dynamic_part.is_empty() {
+            split.dynamic_part.push_str("\n\n");
+        }
+        split.dynamic_part.push_str(memory);
+    }
+    if let Some(skill) = skill_prompt {
+        if !split.dynamic_part.is_empty() {
+            split.dynamic_part.push_str("\n\n");
+        }
+        split.dynamic_part.push_str(&format!("# Active Skill\n\n{}", skill));
+    }
+}
 const SELFDEV_MODE_PROMPT: &str = include_str!("prompt/selfdev_mode.txt");
 const SELFDEV_FOCUS_TUI_PROMPT: &str = include_str!("prompt/selfdev_focus_tui.txt");
 const SELFDEV_FOCUS_DESKTOP2_PROMPT: &str = include_str!("prompt/selfdev_focus_desktop2.txt");

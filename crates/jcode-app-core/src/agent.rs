@@ -233,6 +233,13 @@ pub struct Agent {
     mcp_late_register_resolved: bool,
     /// Override system prompt (used by ambient mode to inject a custom prompt)
     system_prompt_override: Option<String>,
+    /// Frozen static system prompt: built once per session and reused for every
+    /// API call so mid-session edits to prompt source files (`~/AGENTS.md`,
+    /// `.jcode` overlays, preferred-tools) cannot silently change the system
+    /// prompt and flush the entire provider prompt cache (observed 2026-08-12:
+    /// two AGENTS.md appends during one turn each resent ~160k tokens).
+    /// Same freeze philosophy as `locked_tools`. Mutex keeps the builder `&self`.
+    locked_static_prompt: std::sync::Mutex<Option<prompting::StaticPromptLock>>,
     /// Whether memory features are enabled for this session
     memory_enabled: bool,
     /// One-step undo snapshot captured before the most recent rewind.
@@ -296,6 +303,7 @@ impl Agent {
             locked_tools: None,
             mcp_late_register_resolved: false,
             system_prompt_override: None,
+            locked_static_prompt: std::sync::Mutex::new(None),
             memory_enabled: crate::config::config().features.memory,
             rewind_undo_snapshot: None,
             stdin_request_tx: None,
