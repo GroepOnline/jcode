@@ -28,7 +28,7 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 150
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -129,7 +129,7 @@ jobs:
 
       - name: Upload Windows e2e diagnostics
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: windows-smoke-e2e-diagnostics-x64
           path: ${{ runner.temp }}/jcode-windows-e2e-logs
@@ -155,7 +155,7 @@ jobs:
     runs-on: windows-11-arm
     timeout-minutes: 35
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 

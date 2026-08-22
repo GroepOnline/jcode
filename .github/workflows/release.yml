@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -84,7 +84,7 @@ jobs:
             artifact: jcode-macos-x86_64
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ssh-key: ${{ secrets.DEPLOY_KEY }}
           submodules: recursive
@@ -175,7 +175,7 @@ jobs:
           cd dist && tar czf ${{ matrix.artifact }}.tar.gz ${{ matrix.artifact }}
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.artifact }}
           path: dist/${{ matrix.artifact }}.tar.gz
@@ -215,7 +215,7 @@ jobs:
             cargo_args: "--no-default-features --features pdf"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -288,7 +288,7 @@ jobs:
           Copy-Item "target/${{ matrix.target }}/release/jcode.exe" "dist/${{ matrix.artifact }}.exe"
 
       - name: Upload unsigned binary for signing
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.unsigned_artifact }}
           path: dist/${{ matrix.artifact }}.exe
@@ -335,7 +335,7 @@ jobs:
       WINDOWS_SIGNING_REQUIRED: ${{ vars.WINDOWS_SIGNING_REQUIRED }}
     steps:
       - name: Download unsigned Windows binaries
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: windows-unsigned-*
           path: artifacts
@@ -410,7 +410,7 @@ jobs:
           }
 
       - name: Upload final Windows artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: jcode-windows-x86_64
           path: |
@@ -418,7 +418,7 @@ jobs:
             dist/jcode-windows-x86_64.tar.gz
 
       - name: Upload final Windows ARM64 artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: jcode-windows-aarch64
           path: |
@@ -444,7 +444,7 @@ jobs:
     continue-on-error: true
     timeout-minutes: 180
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -489,7 +489,7 @@ jobs:
             cd dist && tar czf jcode-freebsd-x86_64.tar.gz jcode-freebsd-x86_64
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: jcode-freebsd-x86_64
           path: dist/jcode-freebsd-x86_64.tar.gz
@@ -513,11 +513,11 @@ jobs:
       actions: write
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 1
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           path: artifacts
