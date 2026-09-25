@@ -581,18 +581,17 @@ fn parse_apply_patch(input: &str) -> Result<Vec<PatchHunk>> {
                     continue;
                 }
 
-                let change_context;
-                if current == "@@" {
-                    change_context = None;
+                let change_context = if current == "@@" {
                     i += 1;
+                    None
                 } else if let Some(ctx) = current.strip_prefix("@@ ") {
-                    change_context = Some(ctx.to_string());
                     i += 1;
+                    Some(ctx.to_string())
                 } else if is_first_chunk {
-                    change_context = None;
+                    None
                 } else {
                     break;
-                }
+                };
 
                 let mut old_lines = Vec::new();
                 let mut new_lines = Vec::new();

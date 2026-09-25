@@ -39,6 +39,28 @@ jobs:
 
             const owner = context.repo.owner;
             const repo = context.repo.repo;
+
+            // This repository currently has Issues turned off, and the token
+            // that runs CI cannot turn them back on. A linked-issue requirement
+            // then fails every pull request, including Dependabot, with no way
+            // to open the issue the check demands. Enforce the link only while
+            // issues exist.
+            const { data: repoData } = await github.rest.repos.get({ owner, repo });
+            if (!repoData.has_issues) {
+              core.info(
+                'Issues are disabled on this repository, so a linked issue cannot exist. ' +
+                  'The link requirement applies again when issues are enabled.'
+              );
+              return;
+            }
+
+            const login = pr.user?.login || '';
+            // Dependabot cannot open a tracking issue for a lockfile bump.
+            // Human PRs still have to link a real issue in this repository.
+            if (login === 'dependabot[bot]') {
+              core.info('Dependabot pull request; linked issue is not required.');
+              return;
+            }
             const text = `${pr.title || ''}\n\n${pr.body || ''}`;
 
             // Collect candidate issue numbers that belong to THIS repo.

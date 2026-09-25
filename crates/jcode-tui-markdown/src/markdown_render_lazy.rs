@@ -611,13 +611,9 @@ pub fn render_markdown_lazy(
                         reasoning_emphasis = true;
                     }
                     let is_reasoning = reasoning_emphasis;
-                    let stripped;
-                    let text: &str = if has_sentinel {
-                        stripped = text.replace(crate::REASONING_SENTINEL, "");
-                        &stripped
-                    } else {
-                        &text
-                    };
+                    let stripped =
+                        has_sentinel.then(|| text.replace(crate::REASONING_SENTINEL, ""));
+                    let text: &str = stripped.as_deref().unwrap_or(&*text);
                     let mut style = if is_thinking_duration || is_reasoning {
                         Style::default().fg(md_dim_color()).italic()
                     } else {

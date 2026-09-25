@@ -2253,9 +2253,7 @@ Re-run with `--force` if you really want to stop the server.";
 
     let mut signaled_pid: Option<u32> = None;
     let mut stopped = false;
-    let detail: String;
-
-    if let Some(info) = server_info.as_ref() {
+    let detail: String = if let Some(info) = server_info.as_ref() {
         let pid = info.pid;
         if crate::platform::is_process_running(pid) {
             #[cfg(unix)]
@@ -2265,11 +2263,9 @@ Re-run with `--force` if you really want to stop the server.";
                 match crate::platform::signal_detached_process_group(pid, libc::SIGTERM) {
                     Ok(()) => {
                         signaled_pid = Some(pid);
-                        detail = format!("Sent SIGTERM to jcode server (pid {pid}).");
+                        format!("Sent SIGTERM to jcode server (pid {pid}).")
                     }
-                    Err(e) => {
-                        detail = format!("Failed to signal jcode server (pid {pid}): {e}");
-                    }
+                    Err(e) => format!("Failed to signal jcode server (pid {pid}): {e}"),
                 }
             }
             #[cfg(not(unix))]
@@ -2277,25 +2273,23 @@ Re-run with `--force` if you really want to stop the server.";
                 match crate::platform::signal_detached_process_group(pid, 0) {
                     Ok(()) => {
                         signaled_pid = Some(pid);
-                        detail = format!("Terminated jcode server (pid {pid}).");
+                        format!("Terminated jcode server (pid {pid}).")
                     }
-                    Err(e) => {
-                        detail = format!("Failed to terminate jcode server (pid {pid}): {e}");
-                    }
+                    Err(e) => format!("Failed to terminate jcode server (pid {pid}): {e}"),
                 }
             }
         } else {
-            detail = format!("Registered jcode server (pid {pid}) is not running.");
+            format!("Registered jcode server (pid {pid}) is not running.")
         }
     } else if had_listener {
         // A listener answers but no registry entry maps to it. We deliberately
         // do not guess a pid; just reap the socket below once the listener is
         // gone. (This is rare: a daemon that bound the socket but never wrote a
         // registry entry.)
-        detail = "Found a live server socket with no registry entry.".to_string();
+        "Found a live server socket with no registry entry.".to_string()
     } else {
-        detail = "No running jcode server found.".to_string();
-    }
+        "No running jcode server found.".to_string()
+    };
 
     // Wait for the listener to disappear after signalling. Escalate to SIGKILL
     // once if the daemon does not exit within the graceful window.

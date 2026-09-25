@@ -90,7 +90,23 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
+      # Same as CI: skip the agent when DEPLOY_KEY is unset. An empty key
+      # makes webfactory/ssh-agent fail before the release build starts.
+      # `secrets` is not a valid `if` context, so the presence check is a step output.
+      - name: Detect deploy key
+        id: deploy_key
+        shell: bash
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+        run: |
+          if [ -n "$DEPLOY_KEY" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Configure SSH for cargo git dependencies
+        if: steps.deploy_key.outputs.present == 'true'
         uses: webfactory/ssh-agent@dc588b651fe13675774614f8e6a936a468676387
         with:
           ssh-private-key: ${{ secrets.DEPLOY_KEY }}
