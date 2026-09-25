@@ -38,7 +38,8 @@ impl App {
             Some(lock)
                 if lock.skills_fingerprint == fingerprint
                     && lock.is_canary == is_canary
-                    && lock.config_generation == config_generation => {
+                    && lock.config_generation == config_generation =>
+            {
                 (lock.static_part.clone(), lock.context_info.clone())
             }
             _ => {

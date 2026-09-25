@@ -39,11 +39,8 @@ impl Provider for PromptLockProvider {
 }
 
 fn unique_temp_dir(tag: &str) -> std::path::PathBuf {
-    let dir = std::env::temp_dir().join(format!(
-        "jcode-prompt-lock-{}-{}",
-        std::process::id(),
-        tag
-    ));
+    let dir =
+        std::env::temp_dir().join(format!("jcode-prompt-lock-{}-{}", std::process::id(), tag));
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(&dir).expect("create temp prompt dir");
     dir

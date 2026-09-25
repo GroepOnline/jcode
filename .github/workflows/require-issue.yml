@@ -39,6 +39,13 @@ jobs:
 
             const owner = context.repo.owner;
             const repo = context.repo.repo;
+            const login = pr.user?.login || '';
+            // Dependabot cannot open a tracking issue for a lockfile bump.
+            // Human PRs still have to link a real issue in this repository.
+            if (login === 'dependabot[bot]') {
+              core.info('Dependabot pull request; linked issue is not required.');
+              return;
+            }
             const text = `${pr.title || ''}\n\n${pr.body || ''}`;
 
             // Collect candidate issue numbers that belong to THIS repo.
