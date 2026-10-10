@@ -8,6 +8,9 @@ name: FreeBSD Smoke
 # instead of a cross-compile that can never link platform C dependencies
 # (e.g. aws-lc-sys). See issue #416.
 
+permissions:
+  contents: read
+
 on:
   workflow_dispatch:
     inputs:

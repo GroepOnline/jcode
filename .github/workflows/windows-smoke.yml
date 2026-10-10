@@ -1,5 +1,8 @@
 name: Windows Smoke
 
+permissions:
+  contents: read
+
 on:
   workflow_dispatch:
     inputs:
