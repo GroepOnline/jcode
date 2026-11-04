@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+      DEPLOY_KEY_SET: ${{ secrets.DEPLOY_KEY != '' }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -31,7 +31,7 @@ jobs:
         # Skip when DEPLOY_KEY is not configured (forks, dependabot): the only
         # git deps are public HTTPS and there are no submodules, so the agent
         # is only needed where the secret actually exists.
-        if: env.DEPLOY_KEY != ''
+        if: env.DEPLOY_KEY_SET == 'true'
         uses: webfactory/ssh-agent@dc588b651fe13675774614f8e6a936a468676387
         with:
           ssh-private-key: ${{ secrets.DEPLOY_KEY }}
@@ -165,7 +165,7 @@ jobs:
     # pinning it here makes every step use this job's installed stable toolchain.
     env:
       RUSTUP_TOOLCHAIN: stable
-      DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+      DEPLOY_KEY_SET: ${{ secrets.DEPLOY_KEY != '' }}
     strategy:
       fail-fast: false
       matrix:
@@ -183,7 +183,7 @@ jobs:
           submodules: recursive
 
       - name: Configure SSH for cargo git dependencies
-        if: env.DEPLOY_KEY != ''
+        if: env.DEPLOY_KEY_SET == 'true'
         uses: webfactory/ssh-agent@dc588b651fe13675774614f8e6a936a468676387
         with:
           ssh-private-key: ${{ secrets.DEPLOY_KEY }}
@@ -417,7 +417,7 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 150
     env:
-      DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+      DEPLOY_KEY_SET: ${{ secrets.DEPLOY_KEY != '' }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -425,7 +425,7 @@ jobs:
           submodules: recursive
 
       - name: Configure SSH for cargo git dependencies
-        if: env.DEPLOY_KEY != ''
+        if: env.DEPLOY_KEY_SET == 'true'
         uses: webfactory/ssh-agent@dc588b651fe13675774614f8e6a936a468676387
         with:
           ssh-private-key: ${{ secrets.DEPLOY_KEY }}
@@ -675,7 +675,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     env:
-      DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+      DEPLOY_KEY_SET: ${{ secrets.DEPLOY_KEY != '' }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -683,7 +683,7 @@ jobs:
           submodules: recursive
 
       - name: Configure SSH for cargo git dependencies
-        if: env.DEPLOY_KEY != ''
+        if: env.DEPLOY_KEY_SET == 'true'
         uses: webfactory/ssh-agent@dc588b651fe13675774614f8e6a936a468676387
         with:
           ssh-private-key: ${{ secrets.DEPLOY_KEY }}
