@@ -58,6 +58,8 @@ jobs:
     name: Build (${{ matrix.target }})
     runs-on: ${{ matrix.os }}
     needs: create-release
+    env:
+      DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
     # Each matrix architecture is independent. A failed Linux or macOS target
     # must not suppress assets produced by the other successful targets.
     continue-on-error: true
@@ -91,6 +93,9 @@ jobs:
           fetch-depth: 0
 
       - name: Configure SSH for cargo git dependencies
+        # Skip when DEPLOY_KEY is not configured (forks): the only git deps
+        # are public HTTPS and there are no submodules.
+        if: env.DEPLOY_KEY != ''
         uses: webfactory/ssh-agent@dc588b651fe13675774614f8e6a936a468676387
         with:
           ssh-private-key: ${{ secrets.DEPLOY_KEY }}
