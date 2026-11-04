@@ -225,7 +225,9 @@ pub fn append_dynamic_prompt_parts(
         if !split.dynamic_part.is_empty() {
             split.dynamic_part.push_str("\n\n");
         }
-        split.dynamic_part.push_str(&format!("# Active Skill\n\n{}", skill));
+        split
+            .dynamic_part
+            .push_str(&format!("# Active Skill\n\n{}", skill));
     }
 }
 const SELFDEV_MODE_PROMPT: &str = include_str!("prompt/selfdev_mode.txt");
